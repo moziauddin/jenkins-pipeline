@@ -1,0 +1,72 @@
+pipeline {
+  agent none
+  stages {
+    stage('Buzz Buzz') {
+      steps {
+        echo 'Hello there Mo, How are you?'
+      }
+    }
+    stage('Buzz Build') {
+        parallel {
+            stage('Build JDK7') {
+                agent { node { label 'jdk7' } }
+                environment { BUZZ_NAME='JDK7'}
+                steps {
+                    sh 'echo $BUZZ_NAME'
+                    sh './jenkins/build.sh'
+                    //archiveArtifacts(artifacts: 'target/*.jar', fingerprint: true)
+                    stash includes: 'target/*.jar', name: 'jar7'
+                }
+            }
+            stage('Build JDK8') {
+                agent { node { label 'jdk8' } }
+                environment { BUZZ_NAME='JDK8'}
+                steps {
+                    sh 'echo $BUZZ_NAME'
+                    sh './jenkins/build.sh'
+                    //archiveArtifacts(artifacts: 'target/*.jar', fingerprint: true)
+                    stash includes: 'target/*.jar', name: 'jar8'
+                }
+            }
+        }
+    }
+    stage('Run my Tests') {
+        parallel {
+            stage('Test JDK7') {
+                agent { node { label 'jdk7' } }
+                environment { BUZZ_NAME='JDK7'}
+                steps {
+                    sh 'echo $BUZZ_NAME'
+                    sh './jenkins/test-all.sh'
+                    unstash 'jar7'
+                }
+            }
+            stage('Test JDK8') {
+                agent { node { label 'jdk8' } }
+                environment { BUZZ_NAME='JDK8'}
+                steps {
+                    sh 'echo $BUZZ_NAME'
+                    sh './jenkins/test-all.sh'
+                    unstash 'jar8'
+                }
+            }
+        }
+        
+    }
+    stage('Parallel Stages') {
+        parallel {
+            stage('Sleep 2 sec') {
+                agent any
+                steps {
+                    sh 'sleep 2'
+                }
+            }
+            stage('Print node name') {
+                agent any
+                steps {
+                    sh 'echo hostname'
+                }
+            }
+        }
+    }
+  }
