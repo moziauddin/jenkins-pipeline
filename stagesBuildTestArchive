@@ -1,0 +1,25 @@
+pipeline {
+  agent any
+  stages {
+    stage('Buzz Buzz') {
+      steps {
+        echo 'Hello there Mo, How are you?'
+      }
+    }
+    stage('Buzz Build') {
+        steps {
+            sh './jenkins/build.sh'
+        }
+    }
+    stage('Run my Tests') {
+        steps {
+            sh './jenkins/test-all.sh'
+        }
+    }
+    stage('Archive Artifacts') {
+        steps {
+            archiveArtifacts(artifacts: 'target/*.jar', fingerprint: true)
+        }
+    }
+  }
+}
